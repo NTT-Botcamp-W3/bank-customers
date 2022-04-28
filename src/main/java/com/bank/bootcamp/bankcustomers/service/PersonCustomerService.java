@@ -1,7 +1,7 @@
 package com.bank.bootcamp.bankcustomers.service;
 
+import static com.bank.bootcamp.bankcustomers.service.BankValidation.check;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import com.bank.bootcamp.bankcustomers.entity.DocumentType;
@@ -31,17 +31,6 @@ public class PersonCustomerService {
   
   public Mono<PersonCustomer> findByDocument(DocumentType documentType, String documentNumber) {
     return personCustomerRepository.findFirstByDocumentTypeAndDocumentNumber(documentType, documentNumber);
-  }
-
-  private <T> Mono<Void> check(T customer, Predicate<T> predicate, String messageForException) {
-    return Mono.create(sink -> {
-      if (predicate.test(customer)) {
-        sink.error(new BankValidationException(messageForException));
-        return;
-      } else {
-        sink.success();
-      }
-    });
   }
 
 }

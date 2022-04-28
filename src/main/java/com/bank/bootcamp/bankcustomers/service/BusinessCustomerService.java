@@ -1,7 +1,7 @@
 package com.bank.bootcamp.bankcustomers.service;
 
+import static com.bank.bootcamp.bankcustomers.service.BankValidation.check;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import com.bank.bootcamp.bankcustomers.entity.BusinessCustomer;
@@ -30,15 +30,5 @@ public class BusinessCustomerService {
     return businessCustomerRepository.findFirstByRuc(ruc);
   }
 
-  private <T> Mono<Void> check(T customer, Predicate<T> predicate, String messageForException) {
-    return Mono.create(sink -> {
-      if (predicate.test(customer)) {
-        sink.error(new BankValidationException(messageForException));
-        return;
-      } else {
-        sink.success();
-      }
-    });
-  }
 
 }
