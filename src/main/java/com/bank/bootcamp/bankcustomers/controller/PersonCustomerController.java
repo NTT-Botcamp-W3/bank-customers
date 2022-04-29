@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bank.bootcamp.bankcustomers.entity.DocumentType;
 import com.bank.bootcamp.bankcustomers.entity.PersonCustomer;
 import com.bank.bootcamp.bankcustomers.service.PersonCustomerService;
+import com.bank.bootcamp.bankcustomers.webclient.PersonalCustomerAccountsWebClient;
+import com.bank.bootcamp.bankcustomers.webclient.dto.BalanceDTO;
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -18,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class PersonCustomerController {
 
   private final PersonCustomerService personCustomerService;
+  private final PersonalCustomerAccountsWebClient personalCustomerAccountsWebClient;
   
   @PostMapping
   public Mono<PersonCustomer> create(@RequestBody PersonCustomer customer) {
@@ -30,6 +34,11 @@ public class PersonCustomerController {
       @PathVariable("documentNumber") String documentNumber) {
     
     return personCustomerService.findByDocument(documentType, documentNumber);
+  }
+  
+  @GetMapping("/{customerId}/allProducts")
+  public Flux<BalanceDTO> getAllProducts(@PathVariable("customerId") String customerId) {
+    return personalCustomerAccountsWebClient.getAllProductsInfo(customerId);
   }
 
 

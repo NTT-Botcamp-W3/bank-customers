@@ -11,13 +11,13 @@ import com.bank.bootcamp.bankcustomers.webclient.dto.BalanceDTO;
 import reactor.core.publisher.Flux;
 
 @Service
-public class BusinessCustomerAccountsWebClient {
+public class PersonalCustomerAccountsWebClient {
 
   private final ReactiveCircuitBreaker reactiveCircuitBreaker;
   private WebClient webClient;
   
   
-  public BusinessCustomerAccountsWebClient(ReactiveResilience4JCircuitBreakerFactory reactiveCircuitBreakerFactory, Environment env) {
+  public PersonalCustomerAccountsWebClient(ReactiveResilience4JCircuitBreakerFactory reactiveCircuitBreakerFactory, Environment env) {
     this.reactiveCircuitBreaker = reactiveCircuitBreakerFactory.create("products");
     webClient = WebClient.create(env.getProperty("gateway.url"));
   }
@@ -28,18 +28,30 @@ public class BusinessCustomerAccountsWebClient {
     } else {
       
       var currentAccounts = webClient.get()
-          .uri("/currentAccounts/balance/byCustomer/{customerType}/{customerId}", "BUSINESS", customerId)
+          .uri("/currentAccounts/balance/byCustomer/{customerType}/{customerId}", "PERSONAL", customerId)
+          .retrieve()
+          .bodyToFlux(BalanceDTO.class)
+          .transform(balance -> reactiveCircuitBreaker.run(balance, throwable -> Flux.empty()));
+      
+      var savingAccounts = webClient.get()
+          .uri("/savingAccounts/balance/byCustomer/{customerId}", customerId)
+          .retrieve()
+          .bodyToFlux(BalanceDTO.class)
+          .transform(balance -> reactiveCircuitBreaker.run(balance, throwable -> Flux.empty()));
+      
+      var fixedAccounts = webClient.get()
+          .uri("/fixedAccounts/balance/byCustomer/{customerId}", customerId)
           .retrieve()
           .bodyToFlux(BalanceDTO.class)
           .transform(balance -> reactiveCircuitBreaker.run(balance, throwable -> Flux.empty()));
       
       var credits = webClient.get()
-          .uri("/credits/balanceByCustomer/{customerId}/{creditType}", customerId, "BUSINESS")
+          .uri("/credits/balanceByCustomer/{customerId}/{creditType}", customerId, "PERSONAL")
           .retrieve()
           .bodyToFlux(BalanceDTO.class)
           .transform(balance -> reactiveCircuitBreaker.run(balance, throwable -> Flux.empty()));
       
-      return Flux.merge(currentAccounts, credits)
+      return Flux.merge(currentAccounts, savingAccounts, fixedAccounts, credits)
       .parallel()
       .sequential();
     }
